@@ -2,5 +2,11 @@
   "name": "superpowers",
   "version": "5.0.4",
   "type": "module",
-  "main": ".opencode/plugins/superpowers.js"
+  "scripts": {
+    "test": "vitest run"
+  },
+  "main": ".opencode/plugins/superpowers.js",
+  "devDependencies": {
+    "vitest": "^4.1.0"
+  }
 }

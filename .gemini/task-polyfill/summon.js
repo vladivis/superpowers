@@ -237,7 +237,17 @@ async function main() {
     const logStream = createWriteStream(outLog, { flags: 'a' });
     try {
       exitCode = await new Promise((resolve) => {
-        const proc = spawn(cmdPath, ['-m', currentModel, '--prompt', '-', '--yolo'], { cwd: wtPath, detached: !isWindows, stdio: ['pipe', 'pipe', 'pipe'] });
+        // SECURITY: On Windows, use shell to provide console for node-pty, 
+        // but pass as a single quoted string to avoid DEP0190 array-concat vulnerabilities.
+        // currentModel is strictly regex-validated above, so injection is impossible.
+        let proc;
+        const spawnOpts = { cwd: wtPath, detached: !isWindows, stdio: ['pipe', 'pipe', 'pipe'] };
+        if (isWindows) {
+          const cmdString = `"${cmdPath}" -m ${currentModel} --prompt - --yolo`;
+          proc = spawn(cmdString, { ...spawnOpts, shell: true });
+        } else {
+          proc = spawn(cmdPath, ['-m', currentModel, '--prompt', '-', '--yolo'], { ...spawnOpts, shell: false });
+        }
         currentProc = proc;
 
         try {
