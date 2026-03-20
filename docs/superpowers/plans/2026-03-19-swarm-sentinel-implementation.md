@@ -7,7 +7,7 @@
 **Architecture:** 
 1. `NexusServer` gets an event replay buffer. 
 2. `sentinel.js` connects via WebSocket, maintains a rolling log window, evaluates heuristics/Micro-LLMs, and maintains a "Living Heartbeat" (`mtime` on `.swarm/sentinel.alive`). Handles state recovery via `replaySince(eventId)`.
-3. `summon.js` monitors the heartbeat and self-terminates if the Sentinel crashes or fails to start.
+3. `summon.js` monitors the heartbeat and self-terminates if the Sentinel crashes or fails to start, applying a strict 30s grace period.
 4. Skills are updated to launch the Sentinel alongside subagents.
 
 **Tech Stack:** Node.js (native ESM), RFC 6455 WebSockets, Vitest.
@@ -61,9 +61,10 @@ Run: `npx vitest run tests/gemini-cli/dead-mans-switch.test.js`
 
 - [ ] **Step 3: Implement Active Watchdog in `summon.js`**
 In `summon.js` (inside `heartbeat` interval):
-- Try to check `fs.statSync('.swarm/sentinel.alive')`.
+- Ensure there is an absolute 30-second grace period from the subagent's boot time: `if (Date.now() - startTimeTotal < 30000) return;` (Skip ALL checks during grace period to allow Sentinel to boot and to prevent false-positives from stale files from previous crashes).
+- After grace period, check `fs.statSync('.swarm/sentinel.alive')`.
 - If the file exists AND `Date.now() - stats.mtimeMs > 30000`, invoke `handleKill('SENTINEL_DEAD')`.
-- If the file DOES NOT exist AND `Date.now() - startTimeTotal > 30000` (subagent boot time), invoke `handleKill('SENTINEL_NEVER_STARTED')`.
+- If the file DOES NOT exist, invoke `handleKill('SENTINEL_NEVER_STARTED')`.
 
 - [ ] **Step 4: Run test to verify it passes**
 Run: `npx vitest run tests/gemini-cli/dead-mans-switch.test.js`
@@ -71,7 +72,7 @@ Run: `npx vitest run tests/gemini-cli/dead-mans-switch.test.js`
 - [ ] **Step 5: Commit**
 ```bash
 git add .gemini/task-polyfill/summon.js tests/gemini-cli/dead-mans-switch.test.js
-git commit -m "security(summon): implement robust mtime-based Dead Man's Switch including startup failure detection"
+git commit -m "security(summon): implement robust mtime-based Dead Man's Switch with strict startup grace period"
 ```
 
 ---
@@ -84,7 +85,7 @@ git commit -m "security(summon): implement robust mtime-based Dead Man's Switch 
 
 - [ ] **Step 1: Write failing tests for Sentinel**
 ```javascript
-// Test 1: Sentinel connects, utimesSync .alive every 10s, exits code 10 on 'npm ERR!'
+// Test 1: Sentinel connects, touches .alive every 10s, exits code 10 on 'npm ERR!'
 // Test 2 (Replay Recovery): Simulate connection drop. Sentinel reconnects, sends replaySince event, and receives missed logs.
 ```
 - [ ] **Step 2: Run test to verify it fails**
@@ -93,7 +94,7 @@ Run: `npx vitest run tests/gemini-cli/sentinel-core.test.js`
 - [ ] **Step 3: Implement `sentinel.js` Core & Recovery**
 - Parse CLI args: `<taskId>`.
 - Maintain `last_event_id`. Connect to Nexus, and after `hello`, send `{ type: 'replaySince', eventId: last_event_id }` if `last_event_id` is greater than 0.
-- Implement `setInterval` to `fs.utimesSync('.swarm/sentinel.alive', new Date(), new Date())` every 10s (create file if missing).
+- Implement `setInterval` every 10s: use `try { fs.utimesSync(alivePath, new Date(), new Date()) } catch (e) { if(e.code==='ENOENT') writeFileSync(alivePath, '') }` to ensure the file is created if missing and touched otherwise.
 - Accumulate last 100 lines of `log` events in a rolling buffer. Update `last_event_id` from incoming logs.
 - Run Regex heuristics (e.g., `/npm ERR!/`, `/[SENTINEL_WAKE_UP]/`).
 - If triggered: write `.swarm/sentinel-report.json`, send `interrupt` via Nexus, and `process.exit(10)`.
@@ -129,8 +130,7 @@ In `sentinel.js`:
 - Read API key strictly from `process.stdin` upon launch. Store in a local variable, NOT `process.env`.
 - Every 3 minutes, use `node:https` to make a POST request to `generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`.
 - Prompt: "Is subagent still on track? [Yes/No]"
-- If response includes NO (or indicates deviation based on the strict spec prompt), trigger intervention. (Wait, the spec says "If response includes YES, trigger intervention" for the prompt "Is the agent stuck...". Since the spec prompt is "Is subagent still on track? [Yes/No]", the trigger condition should be if the response includes "No" or "NO").
-- *Correction to trigger logic based on the spec prompt:* If response includes "NO", trigger intervention.
+- If response includes "NO", trigger intervention.
 
 - [ ] **Step 4: Run test to verify it passes**
 Run: `npx vitest run tests/gemini-cli/sentinel-cognitive.test.js`
@@ -151,7 +151,7 @@ git commit -m "feat(sentinel): integrate Flash-Lite for secure, strict-prompt co
 
 - [ ] **Step 1: Update `gemini-tools.md`**
 - Document the new Sentinel execution flow for the Parent Agent.
-- Instruction: Launch subagent with `is_background: true`. Then immediately launch `sentinel.js` via stdin piping (`echo $KEY | node <absolute_path_to_extension>/.gemini/task-polyfill/sentinel.js <taskId>`) WITHOUT `is_background: true`.
+- Instruction: Launch subagent with `is_background: true`. Then immediately launch `sentinel.js` via stdin piping (`echo $GOOGLE_API_KEY | node <absolute_path_to_extension>/.gemini/task-polyfill/sentinel.js <taskId>`) WITHOUT `is_background: true`.
 
 - [ ] **Step 2: Update `implementer-prompt.md`**
 - Inform subagents about the `[SENTINEL_WAKE_UP]` marker they can use if they get stuck.
