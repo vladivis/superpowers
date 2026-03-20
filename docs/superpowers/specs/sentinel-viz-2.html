@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sentinel Token Economy: Rolling Window</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; line-height: 1.6; padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 2rem; color: #10b981; margin-bottom: 1.5rem; text-align: center; }
+    
+    .timeline { position: relative; padding: 2rem 0; border-top: 2px solid #334155; margin-top: 2rem; }
+    .log-stream { display: flex; gap: 4px; overflow: hidden; background: #1e293b; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; margin-bottom: 2rem; }
+    .chunk { padding: 4px 8px; background: #334155; border-radius: 4px; color: #94a3b8; white-space: nowrap; }
+    .window { border: 2px solid #10b981; border-radius: 6px; background: rgba(16, 185, 129, 0.1); position: relative; }
+    .window::after { content: 'Sentinel Insight (50 lines)'; position: absolute; top: -25px; left: 0; color: #10b981; font-weight: bold; font-size: 0.7rem; text-transform: uppercase; }
+
+    .math-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+    .card { background: #1e293b; padding: 1.5rem; border-radius: 16px; border: 1px solid #334155; }
+    .card h3 { color: #10b981; margin-bottom: 1rem; }
+    .stat { font-size: 1.5rem; font-weight: bold; color: #f8fafc; }
+    .comparison { margin-top: 2rem; padding: 1.5rem; background: #064e3b; border-radius: 12px; border: 1px solid #10b981; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Token Economy: Rolling Window Analysis</h1>
+    
+    <div class="timeline">
+      <p style="margin-bottom: 1rem; color: #94a3b8;">Subagent Log Stream (Real-time):</p>
+      <div class="log-stream">
+        <div class="chunk">ln 1: init...</div>
+        <div class="chunk">ln 2: reading...</div>
+        <div class="chunk">ln 3: planning...</div>
+        <div class="chunk" style="opacity: 0.5;">...</div>
+        <div class="window">
+          <div class="chunk" style="color: #f8fafc;">ln 48: error detected</div>
+          <div class="chunk" style="color: #f8fafc;">ln 49: retrying loop</div>
+          <div class="chunk" style="color: #f8fafc;">ln 50: stack trace</div>
+        </div>
+        <div class="chunk">...</div>
+      </div>
+    </div>
+
+    <div class="math-grid">
+      <div class="card">
+        <h3>Standard Polling</h3>
+        <p>Parent Agent reads FULL history every turn:</p>
+        <p class="stat">30,000+ tokens/turn</p>
+        <p style="color: #f43f5e; font-size: 0.8rem;">Context collapse in ~10 turns</p>
+      </div>
+      <div class="card">
+        <h3>Sentinel Window</h3>
+        <p>Sentinel reads only LAST N lines:</p>
+        <p class="stat">~500 tokens/check</p>
+        <p style="color: #10b981; font-size: 0.8rem;">Infinite duration possible</p>
+      </div>
+    </div>
+
+    <div class="comparison">
+      <p><b>Efficiency Gain:</b> By using a rolling window, we achieve <b>60x context savings</b> per check compared to Parent Agent polling. Using <i>Flash-Lite</i> makes the cost practically invisible.</p>
+    </div>
+  </div>
+</body>
+</html>

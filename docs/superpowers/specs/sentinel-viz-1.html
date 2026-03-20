@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Swarm Sentinel: The Architecture of Awareness</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; line-height: 1.6; padding: 3rem; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { font-size: 2.5rem; color: #38bdf8; margin-bottom: 1rem; text-align: center; }
+    .subtitle { color: #94a3b8; text-align: center; margin-bottom: 3rem; font-style: italic; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 2rem; align-items: center; margin-bottom: 4rem; position: relative; }
+    
+    .node { background: #1e293b; border: 2px solid #334155; border-radius: 16px; padding: 1.5rem; text-align: center; position: relative; z-index: 2; }
+    .node.active { border-color: #38bdf8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
+    .node.sleep { border-color: #64748b; opacity: 0.7; }
+    .node h2 { font-size: 1.2rem; margin-bottom: 0.5rem; color: #38bdf8; }
+    .node p { font-size: 0.9rem; color: #cbd5e1; }
+
+    .bus { background: #0ea5e9; height: 4px; grid-column: 1 / 4; margin: 1rem 0; position: relative; z-index: 1; border-radius: 2px; }
+    .bus-label { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; font-weight: bold; color: #0ea5e9; text-transform: uppercase; }
+
+    .arrow { color: #38bdf8; font-size: 2rem; text-align: center; }
+    .wakeup-signal { position: absolute; top: 50%; right: 25%; width: 150px; height: 2px; border-top: 2px dashed #f43f5e; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
+
+    .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .item { background: #1e293b; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #38bdf8; }
+    .item h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .item.warning { border-left-color: #f43f5e; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Swarm Sentinel: The Architecture of Awareness</h1>
+    <p class="subtitle">Breaking the turn-based prison with proxy-consciousness</p>
+
+    <div class="grid">
+      <!-- Row 1: The Actors -->
+      <div class="node sleep">
+        <h2>Parent Agent</h2>
+        <p>State: <b>Zzz... (Waiting)</b></p>
+        <p>Context protected. API quotas saved.</p>
+      </div>
+      <div class="arrow">⟵</div>
+      <div class="node active" style="border-color: #f43f5e;">
+        <h2>The Sentinel</h2>
+        <p>State: <b>Active Watcher</b></p>
+        <p>Lightweight Node script. No Context.</p>
+      </div>
+
+      <!-- Bus -->
+      <div class="bus"><div class="bus-label">Nexus IPC Socket Bus</div></div>
+
+      <!-- Row 3: The Work -->
+      <div class="node active">
+        <h2>Subagent</h2>
+        <p>State: <b>Executing Task</b></p>
+        <p>Streaming logs to Nexus...</p>
+      </div>
+      <div class="arrow">⇅</div>
+      <div class="node active">
+        <h2>Nexus Server</h2>
+        <p>State: <b>Relaying</b></p>
+        <p>Handshaking & Routing</p>
+      </div>
+      
+      <div class="wakeup-signal"></div>
+      <div style="position: absolute; top: 40%; right: 20%; color: #f43f5e; font-weight: bold; font-size: 0.8rem;">WAKE UP! (On Error)</div>
+    </div>
+
+    <div class="legend">
+      <div class="item">
+        <h3>1. Fire & Forget</h3>
+        <p>Parent launches Subagent in background and immediately yields to the Sentinel.</p>
+      </div>
+      <div class="item">
+        <h3>2. Deep Listening</h3>
+        <p>Sentinel consumes the raw WebSocket stream from Nexus without costing Parent context tokens.</p>
+      </div>
+      <div class="item warning">
+        <h3>3. Cognitive Trigger</h3>
+        <p>Sentinel exits only when heuristic or Micro-LLM detects a "steering event" is required.</p>
+      </div>
+      <div class="item">
+        <h3>4. The Director Returns</h3>
+        <p>Parent wakes up from its blocking call, reads Sentinel's small report, and issues a fix.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
